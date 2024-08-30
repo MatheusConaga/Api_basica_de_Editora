@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Editoras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        thead th {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+        tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        td button {
+            background-color: #ffc107;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 4px;
+        }
+        td button#editarButton {
+            background-color: #6c757d;
+        }
+        td button#deleteButton {
+            background-color: red;
+        }
+        td button:hover {
+            opacity: 0.8;
+        }
+        #cadastrar {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #cadastrar:hover {
+            background-color: #0056b3;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        function showForm() {
+            document.getElementById("editoraFormDiv").style.display = "block";
+            document.getElementById("formTitle").textContent = "Cadastrar Editora";
+            document.getElementById("editoraForm").reset();
+        }
+
+        function hideForm() {
+            document.getElementById("editoraFormDiv").style.display = "none";
+        }
+
+        async function submitForm() {
+            const id = document.getElementById("editoraId").value;
+            const nome = document.getElementById("nome").value;
+            const ano = document.getElementById("ano").value;
+            const contato = document.getElementById("contato").value;
+
+            const payload = {
+                nome: nome,
+                ano: ano,
+                contato: contato
+            };
+
+            if (id) {
+                await fetch(`/editora/api/editEditora/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await fetch("/editora/api/addEditora/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+            }
+            location.reload();
+        }
+
+        async function confirmDelete(id) {
+            const row = document.querySelector(`tr[data-id='${id}']`);
+            const nome = row.children[1].textContent; 
+        
+            if (confirm(`Tem certeza que deseja deletar a editora "${nome}"?`)) {
+                await fetch(`/editora/api/deleteEditora/${id}`, {
+                    method: "DELETE"
+                });
+                location.reload();
+            }
+        }
+
+        function editEditora(id) {
+            const row = document.querySelector(`tr[data-id='${id}']`);
+            document.getElementById("editoraId").value = id;
+            document.getElementById("nome").value = row.children[1].textContent.trim();
+            document.getElementById("ano").value = row.children[2].textContent.trim();
+            document.getElementById("contato").value = row.children[3].textContent.trim();
+        
+            showForm();
+            document.getElementById("formTitle").textContent = "Editar Editora";
+        }
+        
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Editoras</h1>
+
+        <div id="editoraList">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Ano</th>
+                        <th>Contato</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="editoraTableBody">
+                    {% for editora in editoras %}
+                    <tr data-id="{{ editora.id }}">
+                        <td>{{ editora.id }}</td>
+                        <td>{{ editora.nome }}</td>
+                        <td>{{ editora.ano }}</td>
+                        <td>{{ editora.contato }}</td>
+                        <td>
+                            <button onclick="editEditora({{ editora.id }})" id="editarButton">Editar</button>
+                            <button onclick="confirmDelete({{ editora.id }})" id="deleteButton">Deletar</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <button id="cadastrar" onclick="showForm()">Cadastrar Nova Editora</button>
+
+        <div id="editoraFormDiv" class="form-container" style="display: none;">
+            <h2 id="formTitle">Cadastrar Editora</h2>
+            <form id="editoraForm">
+                <input type="hidden" id="editoraId" name="editoraId">
+                <div class="form-group">
+                    <label for="nome">Nome:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="ano">Ano:</label>
+                    <input type="text" id="ano" name="ano" required>
+                </div>
+                <div class="form-group">
+                    <label for="contato">Contato:</label>
+                    <input type="text" id="contato" name="contato" required>
+                </div>
+                <div class="form-group">
+                    <button type="button" onclick="submitForm()">Salvar</button>
+                </div>
+                <div class="form-group">
+                    <button type="button" onclick="hideForm()" style="background-color: #6c757d;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
